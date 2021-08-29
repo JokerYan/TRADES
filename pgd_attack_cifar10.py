@@ -77,6 +77,10 @@ def _pgd_whitebox(model,
         X_pgd = Variable(X.data + eta, requires_grad=True)
         X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
     err_pgd = (model(X_pgd).data.max(1)[1] != y.data).float().sum()
+
+    # devide by batch size
+    err = err / len(y)
+    err_pgd = err_pgd / len(y)
     print('err pgd (white-box): ', err_pgd)
     return err, err_pgd
 
@@ -108,6 +112,10 @@ def _pgd_blackbox(model_target,
         X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
 
     err_pgd = (model_target(X_pgd).data.max(1)[1] != y.data).float().sum()
+
+    # devide by batch size
+    err /= len(y)
+    err_pgd /= len(y)
     print('err pgd black-box: ', err_pgd)
     return err, err_pgd
 
@@ -119,6 +127,7 @@ def eval_adv_test_whitebox(model, device, test_loader):
     model.eval()
     robust_err_total = 0
     natural_err_total = 0
+    batch_count = len(test_loader)
 
     for data, target in test_loader:
         data, target = data.to(device), target.to(device)
@@ -127,6 +136,10 @@ def eval_adv_test_whitebox(model, device, test_loader):
         err_natural, err_robust = _pgd_whitebox(model, X, y)
         robust_err_total += err_robust
         natural_err_total += err_natural
+
+    # divide by batch count
+    natural_err_total /= batch_count
+    robust_err_total /= batch_count
     print('natural_err_total: ', natural_err_total)
     print('robust_err_total: ', robust_err_total)
 
@@ -139,6 +152,7 @@ def eval_adv_test_blackbox(model_target, model_source, device, test_loader):
     model_source.eval()
     robust_err_total = 0
     natural_err_total = 0
+    batch_count = len(test_loader)
 
     for data, target in test_loader:
         data, target = data.to(device), target.to(device)
@@ -147,6 +161,10 @@ def eval_adv_test_blackbox(model_target, model_source, device, test_loader):
         err_natural, err_robust = _pgd_blackbox(model_target, model_source, X, y)
         robust_err_total += err_robust
         natural_err_total += err_natural
+
+    # divide by batch count
+    natural_err_total /= batch_count
+    robust_err_total /= batch_count
     print('natural_err_total: ', natural_err_total)
     print('robust_err_total: ', robust_err_total)
 
