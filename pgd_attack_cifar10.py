@@ -115,8 +115,8 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     err /= len(y)
     err_pgd /= len(y)
     err_pgd_post /= len(y)
-    print('err pgd (white-box): ', err_pgd)
-    print('err pgd post (white-box): ', err_pgd_post)
+    # print('err pgd (white-box): ', err_pgd)
+    # print('err pgd post (white-box): ', err_pgd_post)
     return err, err_pgd, err_pgd_post
 
 
@@ -194,14 +194,15 @@ def eval_adv_test_whitebox_post(model, device):
     robust_err_total_post = 0
     batch_count = len(test_loader)
 
-    for data, target in test_loader:
+    for i, (data, target) in enumerate(test_loader):
         data, target = data.to(device), target.to(device)
         # pgd attack
         X, y = Variable(data, requires_grad=True), Variable(target)
         err_natural, err_robust, err_robust_post = _pgd_whitebox_post(model, X, y, train_loaders_by_class)
-        robust_err_total += err_robust
         natural_err_total += err_natural
+        robust_err_total += err_robust
         robust_err_total_post += err_robust_post
+        print('avg robust error: {:.4f}\t avg robust post error: {:.4f}'.format(robust_err_total/(i+1), robust_err_total_post/(i+1)))
 
     # divide by batch count
     natural_err_total /= batch_count
