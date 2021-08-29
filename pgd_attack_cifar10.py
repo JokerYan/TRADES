@@ -245,7 +245,8 @@ def main():
         model = WideResNet().to(device)
         model.load_state_dict(torch.load(args.model_path))
 
-        eval_adv_test_whitebox(model, device, test_loader)
+        # eval_adv_test_whitebox(model, device, test_loader)
+        eval_adv_test_whitebox_post(model, device)
     else:
         # black-box attack
         print('pgd black-box attack')
