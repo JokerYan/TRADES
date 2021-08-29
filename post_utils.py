@@ -121,6 +121,7 @@ def post_train(model, images, train_loaders_by_class):
                                 nesterov=True)
     # target_bce_loss_func = TargetBCELoss()
     # target_bl_loss_func = TargetBLLoss()
+    images = images.detach()
     with torch.enable_grad():
         # find neighbour
         original_output = fix_model(images)
