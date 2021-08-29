@@ -10,7 +10,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from models.wideresnet import *
 from models.resnet import *
-
+from post_utils import get_train_loaders_by_class, post_train
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR PGD Attack Evaluation')
 parser.add_argument('--test-batch-size', type=int, default=200, metavar='N',
@@ -79,10 +79,45 @@ def _pgd_whitebox(model,
     err_pgd = (model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
     # devide by batch size
-    err = err / len(y)
-    err_pgd = err_pgd / len(y)
+    err /= len(y)
+    err_pgd /= len(y)
     print('err pgd (white-box): ', err_pgd)
     return err, err_pgd
+
+
+def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
+                       epsilon=args.epsilon, num_steps=args.num_steps, step_size=args.step_size,):
+    out = model(X)
+    err = (out.data.max(1)[1] != y.data).float().sum()
+    X_pgd = Variable(X.data, requires_grad=True)
+    if args.random:
+        random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
+        X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
+
+    for _ in range(num_steps):
+        opt = optim.SGD([X_pgd], lr=1e-3)
+        opt.zero_grad()
+
+        with torch.enable_grad():
+            loss = nn.CrossEntropyLoss()(model(X_pgd), y)
+        loss.backward()
+        eta = step_size * X_pgd.grad.data.sign()
+        X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
+        eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
+        X_pgd = Variable(X.data + eta, requires_grad=True)
+        X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+    err_pgd = (model(X_pgd).data.max(1)[1] != y.data).float().sum()
+
+    post_model = post_train(model, X, train_loaders_by_class)
+    err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
+
+    # devide by batch size
+    err /= len(y)
+    err_pgd /= len(y)
+    err_pgd_post /= len(y)
+    print('err pgd (white-box): ', err_pgd)
+    print('err pgd post (white-box): ', err_pgd_post)
+    return err, err_pgd, err_pgd_post
 
 
 def _pgd_blackbox(model_target,
@@ -142,6 +177,39 @@ def eval_adv_test_whitebox(model, device, test_loader):
     robust_err_total /= batch_count
     print('natural_err_total: ', natural_err_total)
     print('robust_err_total: ', robust_err_total)
+
+
+def eval_adv_test_whitebox_post(model, device):
+    """
+    evaluate model by white-box attack
+    """
+
+    # create separate train and test loaders
+    test_loader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=False, **kwargs)
+    train_loaders_by_class = get_train_loaders_by_class('../data', batch_size=128)
+
+    model.eval()
+    natural_err_total = 0
+    robust_err_total = 0
+    robust_err_total_post = 0
+    batch_count = len(test_loader)
+
+    for data, target in test_loader:
+        data, target = data.to(device), target.to(device)
+        # pgd attack
+        X, y = Variable(data, requires_grad=True), Variable(target)
+        err_natural, err_robust, err_robust_post = _pgd_whitebox_post(model, X, y, train_loaders_by_class)
+        robust_err_total += err_robust
+        natural_err_total += err_natural
+        robust_err_total_post += err_robust_post
+
+    # divide by batch count
+    natural_err_total /= batch_count
+    robust_err_total /= batch_count
+    robust_err_total_post /= batch_count
+    print('natural_err_total: ', natural_err_total)
+    print('robust_err_total: ', robust_err_total)
+    print('robust_err_total_post: ', robust_err_total_post)
 
 
 def eval_adv_test_blackbox(model_target, model_source, device, test_loader):
