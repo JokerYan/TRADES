@@ -75,7 +75,7 @@ def get_train_loaders_by_class(dir_, batch_size):
 def attack_pgd(model, X, y, epsilon, alpha, attack_iters, restarts, opt=None):
     max_loss = torch.zeros(y.shape[0]).cuda()
     max_delta = torch.zeros_like(X).cuda()
-    epsilon = torch.ones([3, 1, 1]) * epsilon
+    epsilon = torch.ones([3, 1, 1]).cuda() * epsilon
     for zz in range(restarts):
         delta = torch.zeros_like(X).cuda()
         for i in range(len(epsilon)):
