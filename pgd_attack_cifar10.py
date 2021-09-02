@@ -10,7 +10,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from models.wideresnet import *
 from models.resnet import *
-from post_utils import get_train_loaders_by_class, post_train
+from post_utils import get_train_loaders_by_class, post_train, attack_pgd
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR PGD Attack Evaluation')
 parser.add_argument('--test-batch-size', type=int, default=200, metavar='N',
@@ -94,37 +94,43 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
         random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
         X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
 
-    for _ in range(num_steps):
-        opt = optim.SGD([X_pgd], lr=1e-3)
-        opt.zero_grad()
-
-        with torch.enable_grad():
-            loss = nn.CrossEntropyLoss()(model(X_pgd), y)
-        loss.backward()
-        eta = step_size * X_pgd.grad.data.sign()
-        X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
-        eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
-        X_pgd = Variable(X.data + eta, requires_grad=True)
-        X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+    # for _ in range(num_steps):
+    #     opt = optim.SGD([X_pgd], lr=1e-3)
+    #     opt.zero_grad()
+    #
+    #     with torch.enable_grad():
+    #         loss = nn.CrossEntropyLoss()(model(X_pgd), y)
+    #     loss.backward()
+    #     eta = step_size * X_pgd.grad.data.sign()
+    #     X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
+    #     eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
+    #     X_pgd = Variable(X.data + eta, requires_grad=True)
+    #     X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+    # strong attack from FGSM-RS
+    alpha = (10 / 255)
+    X_pgd = attack_pgd(model, X, y, epsilon, alpha, 50, 10).detach()
     err_pgd = (model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
     post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X, train_loaders_by_class)
     err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
     # double attack
-    X_pgd = Variable(X.data.detach(), requires_grad=True)
-    for _ in range(num_steps):
-        opt = optim.SGD([X_pgd], lr=1e-3)
-        opt.zero_grad()
-
-        with torch.enable_grad():
-            loss = nn.CrossEntropyLoss()(post_model(X_pgd), y)
-        loss.backward()
-        eta = step_size * X_pgd.grad.data.sign()
-        X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
-        eta = torch.clamp(X_pgd.data - X.data.detach(), -epsilon, epsilon)
-        X_pgd = Variable(X.data.detach() + eta, requires_grad=True)
-        X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+    # X_pgd = Variable(X.data.detach(), requires_grad=True)
+    # for _ in range(num_steps):
+    #     opt = optim.SGD([X_pgd], lr=1e-3)
+    #     opt.zero_grad()
+    #
+    #     with torch.enable_grad():
+    #         loss = nn.CrossEntropyLoss()(post_model(X_pgd), y)
+    #     loss.backward()
+    #     eta = step_size * X_pgd.grad.data.sign()
+    #     X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
+    #     eta = torch.clamp(X_pgd.data - X.data.detach(), -epsilon, epsilon)
+    #     X_pgd = Variable(X.data.detach() + eta, requires_grad=True)
+    #     X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+    # strong attack from FGSM-RS
+    alpha = (10 / 255)
+    X_pgd = attack_pgd(model, X, y, epsilon, alpha, 50, 10).detach()
     err_pgd_double = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
     # devide by batch size
