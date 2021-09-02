@@ -223,7 +223,7 @@ def eval_adv_test_whitebox_post(model, device):
         print('batch {:}: robust error: {:.4f}({:.4f})\t robust post error: {:.4f}({:.4f}) \t '
               'robust double error: {:4.f}({:.4f})'
               .format(i, err_robust, robust_err_total/(i+1), err_robust_post, robust_err_total_post/(i+1),
-                      err_robust_double, robust_err_total_double))
+                      err_robust_double, robust_err_total_double/(i+1)))
 
     # divide by batch count
     natural_err_total /= batch_count
