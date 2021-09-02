@@ -111,13 +111,29 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X, train_loaders_by_class)
     err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
+    # double attack
+    for _ in range(num_steps):
+        opt = optim.SGD([X_pgd], lr=1e-3)
+        opt.zero_grad()
+
+        with torch.enable_grad():
+            loss = nn.CrossEntropyLoss()(post_model(X_pgd), y)
+        loss.backward()
+        eta = step_size * X_pgd.grad.data.sign()
+        X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
+        eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
+        X_pgd = Variable(X.data + eta, requires_grad=True)
+        X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+    err_pgd_double = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
+
     # devide by batch size
     err /= len(y)
     err_pgd /= len(y)
     err_pgd_post /= len(y)
+    err_pgd_double /= len(y)
     # print('err pgd (white-box): ', err_pgd)
     # print('err pgd post (white-box): ', err_pgd_post)
-    return err, err_pgd, err_pgd_post
+    return err, err_pgd, err_pgd_post, err_pgd_double
 
 
 def _pgd_blackbox(model_target,
@@ -192,18 +208,22 @@ def eval_adv_test_whitebox_post(model, device):
     natural_err_total = 0
     robust_err_total = 0
     robust_err_total_post = 0
+    robust_err_total_double = 0
     batch_count = len(test_loader)
 
     for i, (data, target) in enumerate(test_loader):
         data, target = data.to(device), target.to(device)
         # pgd attack
         X, y = Variable(data, requires_grad=True), Variable(target)
-        err_natural, err_robust, err_robust_post = _pgd_whitebox_post(model, X, y, train_loaders_by_class)
+        err_natural, err_robust, err_robust_post, err_robust_double = _pgd_whitebox_post(model, X, y, train_loaders_by_class)
         natural_err_total += err_natural
         robust_err_total += err_robust
         robust_err_total_post += err_robust_post
-        print('batch {:}: robust error: {:.4f}({:.4f})\t robust post error: {:.4f}({:.4f})'
-              .format(i, err_robust, robust_err_total/(i+1), err_robust_post, robust_err_total_post/(i+1)))
+        robust_err_total_double += err_robust_double
+        print('batch {:}: robust error: {:.4f}({:.4f})\t robust post error: {:.4f}({:.4f}) \t '
+              'robust double error: {:4.f}({:.4f})'
+              .format(i, err_robust, robust_err_total/(i+1), err_robust_post, robust_err_total_post/(i+1),
+                      err_robust_double, robust_err_total_double))
 
     # divide by batch count
     natural_err_total /= batch_count
