@@ -122,8 +122,8 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
         loss.backward()
         eta = step_size * X_pgd.grad.data.sign()
         X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
-        eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
-        X_pgd = Variable(X.data + eta, requires_grad=True)
+        eta = torch.clamp(X_pgd.data - X.data.detach(), -epsilon, epsilon)
+        X_pgd = Variable(X.data.detach() + eta, requires_grad=True)
         X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
     err_pgd_double = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
