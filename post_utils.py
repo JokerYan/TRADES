@@ -137,7 +137,7 @@ def post_train(model, images, train_loaders_by_class):
 
         loss_list = []
         acc_list = []
-        for _ in range(5):
+        for _ in range(20):
             # randomize neighbour
             neighbour_class = (original_class + random.randint(1, 9)) % 10
 
