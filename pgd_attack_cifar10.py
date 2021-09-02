@@ -130,7 +130,7 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     #     X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
     # strong attack from FGSM-RS
     alpha = (2 / 255)
-    X_pgd = attack_pgd(model, X, y, epsilon, alpha, 50, 10).detach() + X.detach()
+    X_pgd = attack_pgd(post_model, X, y, epsilon, alpha, 50, 10).detach() + X.detach()
     err_pgd_double = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
     # devide by batch size
