@@ -112,7 +112,7 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
     # double attack
-    X_pgd = Variable(X.data, requires_grad=True).detach()
+    X_pgd = Variable(X.data.detach(), requires_grad=True)
     for _ in range(num_steps):
         opt = optim.SGD([X_pgd], lr=1e-3)
         opt.zero_grad()
