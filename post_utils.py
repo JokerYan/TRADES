@@ -106,7 +106,7 @@ def attack_pgd(model, X, y, epsilon, alpha, attack_iters, restarts, opt=None):
     return max_delta
 
 
-def post_train(model, images, train_loaders_by_class):
+def post_train(model, images, train_loaders_by_class, args):
     alpha = (10 / 255)
     epsilon = (8 / 255)
     loss_func = nn.CrossEntropyLoss()
@@ -137,15 +137,22 @@ def post_train(model, images, train_loaders_by_class):
 
         loss_list = []
         acc_list = []
-        for _ in range(20):
+        for _ in range(args.pt_iter):
             # randomize neighbour
-            neighbour_class = (original_class + random.randint(1, 9)) % 10
+            if args.pt_data == 'ori_rand':
+                neighbour_class = (original_class + random.randint(1, 9)) % 10
+            elif args.pt_data == 'rand':
+                original_class = (original_class + random.randint(0, 9)) % 10
+                neighbour_class = (original_class + random.randint(0, 9)) % 10
+            else:
+                raise NotImplementedError
 
             original_data, original_label = next(iter(train_loaders_by_class[original_class]))
             neighbour_data, neighbour_label = next(iter(train_loaders_by_class[neighbour_class]))
 
             data = torch.vstack([original_data, neighbour_data]).to(device)
-            data = merge_images(data, images, 0.7, device)
+            if args.mixup:
+                data = merge_images(data, images, 0.7, device)
             label = torch.hstack([original_label, neighbour_label]).to(device)
             target = torch.hstack([neighbour_label, original_label]).to(device)
 
@@ -165,7 +172,13 @@ def post_train(model, images, train_loaders_by_class):
             # attack_model.set_mode_targeted_by_function(lambda im, la: target)
             # adv_input = attack_model(data, label)
 
-            adv_output = model(adv_input.detach())
+
+            if args.pt_method == 'adv':
+                adv_output = model(adv_input.detach())
+            elif args.pt_method == 'normal':
+                adv_output = model(data.detach())  # non adv training
+            else:
+                raise NotImplementedError
             # adv_class = torch.argmax(adv_output)
             loss_pos = loss_func(adv_output, label)
             loss_neg = loss_func(adv_output, target)
