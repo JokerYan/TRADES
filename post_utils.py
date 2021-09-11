@@ -138,14 +138,14 @@ def post_train(model, images, train_loaders_by_class, args):
         loss_list = []
         acc_list = []
         for _ in range(args.pt_iter):
-            # randomize neighbour
-            if args.pt_data == 'ori_rand':
-                neighbour_class = (original_class + random.randint(1, 9)) % 10
-            elif args.pt_data == 'rand':
-                original_class = (original_class + random.randint(0, 9)) % 10
-                neighbour_class = (original_class + random.randint(0, 9)) % 10
-            else:
-                raise NotImplementedError
+            # # randomize neighbour
+            # if args.pt_data == 'ori_rand':
+            #     neighbour_class = (original_class + random.randint(1, 9)) % 10
+            # elif args.pt_data == 'rand':
+            #     original_class = (original_class + random.randint(0, 9)) % 10
+            #     neighbour_class = (original_class + random.randint(0, 9)) % 10
+            # else:
+            #     raise NotImplementedError
 
             original_data, original_label = next(iter(train_loaders_by_class[original_class]))
             neighbour_data, neighbour_label = next(iter(train_loaders_by_class[neighbour_class]))
