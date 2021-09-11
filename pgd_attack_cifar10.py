@@ -117,7 +117,7 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     # X_pgd = attack_pgd(model, X, y, epsilon, alpha, 50, 10).detach() + X.detach()
     err_pgd = (model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
-    post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X, train_loaders_by_class, args)
+    post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X_pgd, train_loaders_by_class, args)
     err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
     # double attack
