@@ -106,7 +106,7 @@ def attack_pgd(model, X, y, epsilon, alpha, attack_iters, restarts, opt=None):
     return max_delta
 
 
-def post_train(model, images, train_loaders_by_class, args):
+def post_train(model, images, train_loader, train_loaders_by_class, args):
     alpha = (10 / 255)
     epsilon = (8 / 255)
     loss_func = nn.CrossEntropyLoss()
@@ -131,6 +131,8 @@ def post_train(model, images, train_loaders_by_class, args):
         neighbour_output = fix_model(neighbour_images)
         neighbour_class = torch.argmax(neighbour_output).reshape(1)
 
+        train_data, train_label = next(iter(train_loader))
+
         if original_class == neighbour_class:
             print('original class == neighbour class')
             # return model, original_class, neighbour_class, None, None
@@ -150,11 +152,16 @@ def post_train(model, images, train_loaders_by_class, args):
             original_data, original_label = next(iter(train_loaders_by_class[original_class]))
             neighbour_data, neighbour_label = next(iter(train_loaders_by_class[neighbour_class]))
 
-            data = torch.vstack([original_data, neighbour_data]).to(device)
+            if args.pt_data == 'ori_neigh_train':
+                data = torch.vstack([original_data, neighbour_data, train_data]).to(device)
+                label = torch.hstack([original_label, neighbour_label, train_label]).to(device)
+            else:
+                data = torch.vstack([original_data, neighbour_data]).to(device)
+                label = torch.hstack([original_label, neighbour_label]).to(device)
+
             if args.mixup:
                 data = merge_images(data, images, 0.7, device)
-            label = torch.hstack([original_label, neighbour_label]).to(device)
-            target = torch.hstack([neighbour_label, original_label]).to(device)
+            # target = torch.hstack([neighbour_label, original_label]).to(device)
 
             # generate fgsm adv examples
             delta = (torch.rand_like(data) * 2 - 1) * epsilon  # uniform rand from [-eps, eps]
@@ -181,7 +188,7 @@ def post_train(model, images, train_loaders_by_class, args):
                 raise NotImplementedError
             # adv_class = torch.argmax(adv_output)
             loss_pos = loss_func(adv_output, label)
-            loss_neg = loss_func(adv_output, target)
+            # loss_neg = loss_func(adv_output, target)
             # bce_loss = target_bce_loss_func(adv_output, label, original_class, neighbour_class)
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 

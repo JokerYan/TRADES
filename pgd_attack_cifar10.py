@@ -41,7 +41,7 @@ parser.add_argument('--white-box-attack', default=True,
 # post train parameters
 parser.set_defaults(mixup=True, type=bool)
 parser.add_argument('--no-mixup', dest='mixup', action='store_false')
-parser.add_argument('--pt-data', default='ori_rand', choices=['ori_rand', 'rand'], type=str)
+parser.add_argument('--pt-data', default='ori_rand', choices=['ori_rand', 'rand', 'ori_neigh_train'], type=str)
 parser.add_argument('--pt-method', default='adv', choices=['adv', 'normal'], type=str)
 parser.add_argument('--pt-iter', default=5, type=int)
 
@@ -53,7 +53,16 @@ device = torch.device("cuda" if use_cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
 # set up data loader
-transform_test = transforms.Compose([transforms.ToTensor(),])
+transform_train = transforms.Compose([
+    transforms.RandomCrop(32, padding=4),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+])
+transform_test = transforms.Compose([
+    transforms.ToTensor(),
+])
+trainset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform_train)
+train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, **kwargs)
 testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform_test)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
@@ -118,7 +127,7 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     # X_pgd = attack_pgd(model, X, y, epsilon, alpha, 50, 10).detach() + X.detach()
     err_pgd = (model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
-    post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X_pgd, train_loaders_by_class, args)
+    post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X_pgd, train_loader, train_loaders_by_class, args)
     err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
     # double attack
