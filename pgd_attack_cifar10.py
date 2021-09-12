@@ -41,7 +41,7 @@ parser.add_argument('--white-box-attack', default=True,
 # post train parameters
 parser.set_defaults(mixup=True, type=bool)
 parser.add_argument('--no-mixup', dest='mixup', action='store_false')
-parser.add_argument('--pt-data', default='ori_rand', choices=['ori_rand', 'rand', 'ori_neigh_train'], type=str)
+parser.add_argument('--pt-data', default='ori_neigh', choices=['ori_rand', 'rand', 'ori_neigh_train'], type=str)
 parser.add_argument('--pt-method', default='adv', choices=['adv', 'normal'], type=str)
 parser.add_argument('--pt-iter', default=5, type=int)
 
