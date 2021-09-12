@@ -132,7 +132,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
         neighbour_output = fix_model(neighbour_images)
         neighbour_class = torch.argmax(neighbour_output).reshape(1)
 
-        train_data, train_label = next(iter(train_loader))
+        # train_data, train_label = next(iter(train_loader))
 
         if original_class == neighbour_class:
             print('original class == neighbour class')
