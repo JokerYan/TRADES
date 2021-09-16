@@ -109,12 +109,12 @@ def attack_pgd(model, X, y, epsilon, alpha, attack_iters, restarts, opt=None):
     return max_delta
 
 
-def attack_pgd_trades(model, data, label, epsilon, alpha, device):
+def attack_pgd_trades(model, data, label, epsilon, alpha, step_count, device):
     X, y = Variable(data, requires_grad=True), Variable(label)
     X_pgd = Variable(X.data, requires_grad=True)
     random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
     X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
-    for _ in range(20):
+    for _ in range(step_count):
         opt = torch.optim.SGD([X_pgd], lr=1e-3)
         opt.zero_grad()
 
@@ -153,7 +153,8 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
         # neighbour_images = attack_model(images, original_class)
         # neighbour_delta = attack_pgd(model, images, original_class, epsilon, alpha, attack_iters=20, restarts=1)
         # neighbour_images = neighbour_delta + images
-        neighbour_images = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, device)
+        neighbour_images = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, 20, device)
+        neighbour_delta = (neighbour_images - images).detach()
         neighbour_output = fix_model(neighbour_images)
         neighbour_class = torch.argmax(neighbour_output).reshape(1)
 
@@ -213,18 +214,19 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             #     X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
             # adv_input = X_pgd
 
-            # generate fgsm adv examples
-            delta = (torch.rand_like(data) * 2 - 1) * epsilon  # uniform rand from [-eps, eps]
-            noise_input = data + delta
-            noise_input.requires_grad = True
-            noise_output = model(noise_input)
-            loss = loss_func(noise_output, label)  # loss to be maximized
-            # loss = target_bce_loss_func(noise_output, label, original_class, neighbour_class)  # bce loss to be maximized
-            input_grad = torch.autograd.grad(loss, noise_input)[0]
-            delta = delta + alpha * torch.sign(input_grad)
-            delta.clamp_(-epsilon, epsilon)
-            adv_input = data + delta
+            # # generate fgsm adv examples
+            # delta = (torch.rand_like(data) * 2 - 1) * epsilon  # uniform rand from [-eps, eps]
+            # noise_input = data + delta
+            # noise_input.requires_grad = True
+            # noise_output = model(noise_input)
+            # loss = loss_func(noise_output, label)  # loss to be maximized
+            # # loss = target_bce_loss_func(noise_output, label, original_class, neighbour_class)  # bce loss to be maximized
+            # input_grad = torch.autograd.grad(loss, noise_input)[0]
+            # delta = delta + alpha * torch.sign(input_grad)
+            # delta.clamp_(-epsilon, epsilon)
+            # adv_input = data + delta
             # adv_input = data + (torch.randint(0, 1, size=()) - 0.5).to(device) * 2 * neighbour_delta
+            adv_input = data + -1 * neighbour_delta
 
             # generate pgd adv example
             # attack_model.set_mode_targeted_by_function(lambda im, la: target)
