@@ -220,7 +220,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
 
             # loss = torch.mean(loss_list)
             loss = loss_pos
-            # optimizer.zero_grad()
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             defense_acc = cal_accuracy(adv_output, label)
