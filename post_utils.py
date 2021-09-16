@@ -192,14 +192,14 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             else:
                 raise NotImplementedError
             # adv_class = torch.argmax(adv_output)
-            # loss_pos = loss_func(adv_output, label)
-            loss_trades = trades_loss(model, data, label, optimizer)
+            loss_pos = loss_func(adv_output, label)
+            # loss_trades = trades_loss(model, data, label, optimizer)
             # loss_neg = loss_func(adv_output, target)
             # bce_loss = target_bce_loss_func(adv_output, label, original_class, neighbour_class)
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 
             # loss = torch.mean(loss_list)
-            loss = loss_trades
+            loss = loss_pos
             # optimizer.zero_grad()
             loss.backward()
             optimizer.step()
