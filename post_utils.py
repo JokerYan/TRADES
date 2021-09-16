@@ -135,8 +135,6 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
         neighbour_output = fix_model(neighbour_images)
         neighbour_class = torch.argmax(neighbour_output).reshape(1)
 
-        # train_data, train_label = next(iter(train_loader))
-
         if original_class == neighbour_class:
             print('original class == neighbour class')
             if args.pt_data == 'ori_neigh':
@@ -157,13 +155,18 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             original_data, original_label = next(iter(train_loaders_by_class[original_class]))
             neighbour_data, neighbour_label = next(iter(train_loaders_by_class[neighbour_class]))
 
-            if args.pt_data == 'ori_neigh_train':
-                raise NotImplementedError
-                # data = torch.vstack([original_data, neighbour_data, train_data]).to(device)
-                # label = torch.hstack([original_label, neighbour_label, train_label]).to(device)
-            else:
-                data = torch.vstack([original_data, neighbour_data]).to(device)
-                label = torch.hstack([original_label, neighbour_label]).to(device)
+            train_data, train_label = next(iter(train_loader))
+            data = train_data
+            label = train_label
+
+            # if args.pt_data == 'ori_neigh_train':
+            #     raise NotImplementedError
+            #     # data = torch.vstack([original_data, neighbour_data, train_data]).to(device)
+            #     # label = torch.hstack([original_label, neighbour_label, train_label]).to(device)
+            # else:
+            #     data = torch.vstack([original_data, neighbour_data]).to(device)
+            #     label = torch.hstack([original_label, neighbour_label]).to(device)
+
 
             if args.mixup:
                 data = merge_images(data, images, 0.7, device)
