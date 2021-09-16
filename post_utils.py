@@ -168,8 +168,8 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
                 label = torch.hstack([original_label, neighbour_label]).to(device)
 
 
-            if args.mixup:
-                data = merge_images(data, images, 0.7, device)
+            # if args.mixup:
+            #     data = merge_images(data, images, 0.7, device)
             # target = torch.hstack([neighbour_label, original_label]).to(device)
 
             # generate pgd adv examples
