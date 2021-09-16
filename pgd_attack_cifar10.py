@@ -130,6 +130,7 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X_pgd, train_loader, train_loaders_by_class, args)
     err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
     neighbour_acc = 1 if neighbour_class == y or original_class == y else 0
+    print(y, original_class, neighbour_class)
 
     # double attack
     X_pgd = Variable(X.data.detach(), requires_grad=True)
