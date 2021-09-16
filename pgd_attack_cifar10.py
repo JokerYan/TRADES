@@ -129,6 +129,7 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
 
     post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X_pgd, train_loader, train_loaders_by_class, args)
     err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
+    neighbour_acc = 1 if neighbour_class == y or original_class == y else 0
 
     # double attack
     X_pgd = Variable(X.data.detach(), requires_grad=True)
@@ -156,7 +157,7 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     err_pgd_double /= len(y)
     # print('err pgd (white-box): ', err_pgd)
     # print('err pgd post (white-box): ', err_pgd_post)
-    return err, err_pgd, err_pgd_post, err_pgd_double
+    return err, err_pgd, err_pgd_post, err_pgd_double, neighbour_acc
 
 
 def _pgd_blackbox(model_target,
@@ -234,19 +235,22 @@ def eval_adv_test_whitebox_post(model, device):
     robust_err_total_double = 0
     batch_count = len(test_loader)
 
+    neighbour_total_acc = 0
+
     for i, (data, target) in enumerate(test_loader):
         data, target = data.to(device), target.to(device)
         # pgd attack
         X, y = Variable(data, requires_grad=True), Variable(target)
-        err_natural, err_robust, err_robust_post, err_robust_double = _pgd_whitebox_post(model, X, y, train_loaders_by_class)
+        err_natural, err_robust, err_robust_post, err_robust_double, neighbour_acc = _pgd_whitebox_post(model, X, y, train_loaders_by_class)
         natural_err_total += err_natural
         robust_err_total += err_robust
         robust_err_total_post += err_robust_post
         robust_err_total_double += err_robust_double
+        neighbour_total_acc += neighbour_acc
         print('batch {:}: robust error: {:.4f}({:.4f})\t robust post error: {:.4f}({:.4f}) \t '
-              'robust double error: {:.4f}({:.4f})'
+              'robust double error: {:.4f}({:.4f}) neighbour acc: {:.4f}({:.4f})'
               .format(i, err_robust, robust_err_total/(i+1), err_robust_post, robust_err_total_post/(i+1),
-                      err_robust_double, robust_err_total_double/(i+1)))
+                      err_robust_double, robust_err_total_double/(i+1), neighbour_acc, neighbour_total_acc/(i+1)))
 
     # divide by batch count
     natural_err_total /= batch_count
