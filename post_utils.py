@@ -197,24 +197,24 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             #     data = merge_images(data, images, 0.7, device)
             # target = torch.hstack([neighbour_label, original_label]).to(device)
 
-            # generate pgd adv examples
-            X, y = Variable(data, requires_grad=True), Variable(label)
-            X_pgd = Variable(X.data, requires_grad=True)
-            random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
-            X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
-            for _ in range(20):
-                opt = torch.optim.SGD([X_pgd], lr=1e-3)
-                opt.zero_grad()
-
-                with torch.enable_grad():
-                    loss = nn.CrossEntropyLoss()(fix_model(X_pgd), y)
-                loss.backward()
-                eta = 0.003 * X_pgd.grad.data.sign()
-                X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
-                eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
-                X_pgd = Variable(X.data + eta, requires_grad=True)
-                X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
-            adv_input = X_pgd
+            # # generate pgd adv examples
+            # X, y = Variable(data, requires_grad=True), Variable(label)
+            # X_pgd = Variable(X.data, requires_grad=True)
+            # random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
+            # X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
+            # for _ in range(20):
+            #     opt = torch.optim.SGD([X_pgd], lr=1e-3)
+            #     opt.zero_grad()
+            #
+            #     with torch.enable_grad():
+            #         loss = nn.CrossEntropyLoss()(fix_model(X_pgd), y)
+            #     loss.backward()
+            #     eta = 0.003 * X_pgd.grad.data.sign()
+            #     X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
+            #     eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
+            #     X_pgd = Variable(X.data + eta, requires_grad=True)
+            #     X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+            # adv_input = X_pgd
 
             # # generate fgsm adv examples
             # delta = (torch.rand_like(data) * 2 - 1) * epsilon  # uniform rand from [-eps, eps]
@@ -230,9 +230,9 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # adv_input = data + (torch.randint(0, 2, size=()) - 0.5).to(device) * 2 * neighbour_delta
             # adv_input = data + -1 * torch.rand_like(data).to(device) * neighbour_delta
             # adv_input = data + -1 * neighbour_delta
-            # directed_delta = torch.vstack([torch.ones_like(original_data).to(device) * neighbour_delta,
-            #                                 torch.ones_like(neighbour_data).to(device) * -1 * neighbour_delta])
-            # adv_input = data + directed_delta
+            directed_delta = torch.vstack([torch.ones_like(original_data).to(device) * neighbour_delta,
+                                            torch.ones_like(neighbour_data).to(device) * -1 * neighbour_delta])
+            adv_input = data + directed_delta
 
             # generate pgd adv example
             # attack_model.set_mode_targeted_by_function(lambda im, la: target)
@@ -246,16 +246,16 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             else:
                 raise NotImplementedError
             # adv_class = torch.argmax(adv_output)
-            # loss_pos = loss_func(adv_output, label)
-            loss_ori = loss_func(original_output, label)
-            loss_kl = kl_loss(F.log_softmax(adv_output), F.softmax(original_output))
+            loss_pos = loss_func(adv_output, label)
+            # loss_ori = loss_func(original_output, label)
+            # loss_kl = kl_loss(F.log_softmax(adv_output), F.softmax(original_output))
             # loss_trades = trades_loss(model, data, label, optimizer)
             # loss_neg = loss_func(adv_output, target)
             # bce_loss = target_bce_loss_func(adv_output, label, original_class, neighbour_class)
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 
             # loss = torch.mean(loss_list)
-            loss = loss_ori + loss_kl
+            loss = loss_pos
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
