@@ -109,11 +109,12 @@ def attack_pgd(model, X, y, epsilon, alpha, attack_iters, restarts, opt=None):
     return max_delta
 
 
-def attack_pgd_trades(model, data, label, epsilon, alpha, step_count, device):
+def attack_pgd_trades(model, data, label, epsilon, alpha, step_count, random_start, device):
     X, y = Variable(data, requires_grad=True), Variable(label)
     X_pgd = Variable(X.data, requires_grad=True)
-    random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
-    X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
+    if random_start:
+        random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
+        X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
     for _ in range(step_count):
         opt = torch.optim.SGD([X_pgd], lr=1e-3)
         opt.zero_grad()
@@ -153,7 +154,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
         # neighbour_images = attack_model(images, original_class)
         # neighbour_delta = attack_pgd(model, images, original_class, epsilon, alpha, attack_iters=20, restarts=1)
         # neighbour_images = neighbour_delta + images
-        neighbour_images = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, 20, device)
+        neighbour_images = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, 20, False, device)
         neighbour_delta = (neighbour_images - images).detach()
         neighbour_output = fix_model(neighbour_images)
         neighbour_class = torch.argmax(neighbour_output).reshape(1)
