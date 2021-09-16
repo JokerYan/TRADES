@@ -156,8 +156,8 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             neighbour_data, neighbour_label = next(iter(train_loaders_by_class[neighbour_class]))
 
             train_data, train_label = next(iter(train_loader))
-            data = train_data
-            label = train_label
+            data = train_data.to(device)
+            label = train_label.to(device)
 
             # if args.pt_data == 'ori_neigh_train':
             #     raise NotImplementedError
