@@ -206,5 +206,5 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             defense_acc = cal_accuracy(adv_output, label)
             loss_list.append(loss)
             acc_list.append(defense_acc)
-            # print('loss: {:.4f}  acc: {:.4f}'.format(loss, defense_acc))
+            print('loss: {:.4f}  acc: {:.4f}'.format(loss, defense_acc))
     return model, original_class, neighbour_class, loss_list, acc_list
