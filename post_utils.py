@@ -144,7 +144,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
                                 params=model.parameters(),
                                 momentum=0.9,
                                 nesterov=True)
-    kl_loss = nn.KLDivLoss()
+    kl_loss = nn.KLDivLoss(reduction='batchmean')
     # target_bce_loss_func = TargetBCELoss()
     # target_bl_loss_func = TargetBLLoss()
     images = images.detach()
