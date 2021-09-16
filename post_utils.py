@@ -171,6 +171,9 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
 
             # generate pgd adv examples
             X, y = Variable(data, requires_grad=True), Variable(label)
+            X_pgd = Variable(X.data, requires_grad=True)
+            random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
+            X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
             for _ in range(20):
                 opt = torch.optim.SGD([X_pgd], lr=1e-3)
                 opt.zero_grad()
