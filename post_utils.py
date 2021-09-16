@@ -172,36 +172,36 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             #     data = merge_images(data, images, 0.7, device)
             # target = torch.hstack([neighbour_label, original_label]).to(device)
 
-            # generate pgd adv examples
-            X, y = Variable(data, requires_grad=True), Variable(label)
-            X_pgd = Variable(X.data, requires_grad=True)
-            random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
-            X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
-            for _ in range(20):
-                opt = torch.optim.SGD([X_pgd], lr=1e-3)
-                opt.zero_grad()
+            # # generate pgd adv examples
+            # X, y = Variable(data, requires_grad=True), Variable(label)
+            # X_pgd = Variable(X.data, requires_grad=True)
+            # random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
+            # X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
+            # for _ in range(20):
+            #     opt = torch.optim.SGD([X_pgd], lr=1e-3)
+            #     opt.zero_grad()
+            #
+            #     with torch.enable_grad():
+            #         loss = nn.CrossEntropyLoss()(fix_model(X_pgd), y)
+            #     loss.backward()
+            #     eta = 0.003 * X_pgd.grad.data.sign()
+            #     X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
+            #     eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
+            #     X_pgd = Variable(X.data + eta, requires_grad=True)
+            #     X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+            # adv_input = X_pgd
 
-                with torch.enable_grad():
-                    loss = nn.CrossEntropyLoss()(fix_model(X_pgd), y)
-                loss.backward()
-                eta = 0.003 * X_pgd.grad.data.sign()
-                X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
-                eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
-                X_pgd = Variable(X.data + eta, requires_grad=True)
-                X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
-            adv_input = X_pgd
-
-            # # generate fgsm adv examples
-            # delta = (torch.rand_like(data) * 2 - 1) * epsilon  # uniform rand from [-eps, eps]
-            # noise_input = data + delta
-            # noise_input.requires_grad = True
-            # noise_output = model(noise_input)
-            # loss = loss_func(noise_output, label)  # loss to be maximized
-            # # loss = target_bce_loss_func(noise_output, label, original_class, neighbour_class)  # bce loss to be maximized
-            # input_grad = torch.autograd.grad(loss, noise_input)[0]
-            # delta = delta + alpha * torch.sign(input_grad)
-            # delta.clamp_(-epsilon, epsilon)
-            # adv_input = data + delta
+            # generate fgsm adv examples
+            delta = (torch.rand_like(data) * 2 - 1) * epsilon  # uniform rand from [-eps, eps]
+            noise_input = data + delta
+            noise_input.requires_grad = True
+            noise_output = model(noise_input)
+            loss = loss_func(noise_output, label)  # loss to be maximized
+            # loss = target_bce_loss_func(noise_output, label, original_class, neighbour_class)  # bce loss to be maximized
+            input_grad = torch.autograd.grad(loss, noise_input)[0]
+            delta = delta + alpha * torch.sign(input_grad)
+            delta.clamp_(-epsilon, epsilon)
+            adv_input = data + delta
             # adv_input = data + (torch.randint(0, 1, size=()) - 0.5).to(device) * 2 * neighbour_delta
 
             # generate pgd adv example
