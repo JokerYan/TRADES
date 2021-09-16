@@ -227,8 +227,8 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # delta = delta + alpha * torch.sign(input_grad)
             # delta.clamp_(-epsilon, epsilon)
             # adv_input = data + delta
-            adv_input = data + (torch.randint(0, 2, size=()) - 0.5).to(device) * 2 * neighbour_delta * 1.5
-            # adv_input = data + -1 * torch.rand_like(data).to(device) * neighbour_delta
+            # adv_input = data + (torch.randint(0, 2, size=()) - 0.5).to(device) * 2 * neighbour_delta
+            adv_input = data + -1 * torch.rand_like(data).to(device) * neighbour_delta
             # adv_input = data + -1 * neighbour_delta
             # directed_delta = torch.vstack([torch.ones_like(original_data).to(device) * neighbour_delta,
             #                                 torch.ones_like(neighbour_data).to(device) * -1 * neighbour_delta])
@@ -238,7 +238,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # attack_model.set_mode_targeted_by_function(lambda im, la: target)
             # adv_input = attack_model(data, label)
 
-            original_output = model(data.detach())
+            # original_output = model(data.detach())
             if args.pt_method == 'adv':
                 adv_output = model(adv_input.detach())
             elif args.pt_method == 'normal':
