@@ -226,8 +226,9 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # delta = delta + alpha * torch.sign(input_grad)
             # delta.clamp_(-epsilon, epsilon)
             # adv_input = data + delta
-            # adv_input = data + (torch.randint(0, 1, size=()) - 0.5).to(device) * 2 * neighbour_delta
-            adv_input = data + -1 * neighbour_delta
+            # adv_input = data + (torch.randint(0, 2, size=()) - 0.5).to(device) * 2 * neighbour_delta
+            adv_input = data + -1 * torch.rand_like(data).to(device) * neighbour_delta
+            # adv_input = data + -1 * neighbour_delta
 
             # generate pgd adv example
             # attack_model.set_mode_targeted_by_function(lambda im, la: target)
