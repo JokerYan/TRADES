@@ -179,20 +179,18 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # delta = delta + alpha * torch.sign(input_grad)
             # delta.clamp_(-epsilon, epsilon)
             # adv_input = data + delta
-            if False:
-                adv_input = data + (torch.randint(0, 1, size=()) - 0.5).to(device) * 2 * neighbour_delta
+            adv_input = data + (torch.randint(0, 1, size=()) - 0.5).to(device) * 2 * neighbour_delta
 
             # generate pgd adv example
             # attack_model.set_mode_targeted_by_function(lambda im, la: target)
             # adv_input = attack_model(data, label)
 
-            if False:
-                if args.pt_method == 'adv':
-                    adv_output = model(adv_input.detach())
-                elif args.pt_method == 'normal':
-                    adv_output = model(data.detach())  # non adv training
-                else:
-                    raise NotImplementedError
+            if args.pt_method == 'adv':
+                adv_output = model(adv_input.detach())
+            elif args.pt_method == 'normal':
+                adv_output = model(data.detach())  # non adv training
+            else:
+                raise NotImplementedError
             # adv_class = torch.argmax(adv_output)
             # loss_pos = loss_func(adv_output, label)
             trade_optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=2e-4)
