@@ -155,17 +155,17 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             original_data, original_label = next(iter(train_loaders_by_class[original_class]))
             neighbour_data, neighbour_label = next(iter(train_loaders_by_class[neighbour_class]))
 
-            train_data, train_label = next(iter(train_loader))
-            data = train_data.to(device)
-            label = train_label.to(device)
+            # train_data, train_label = next(iter(train_loader))
+            # data = train_data.to(device)
+            # label = train_label.to(device)
 
-            # if args.pt_data == 'ori_neigh_train':
-            #     raise NotImplementedError
-            #     # data = torch.vstack([original_data, neighbour_data, train_data]).to(device)
-            #     # label = torch.hstack([original_label, neighbour_label, train_label]).to(device)
-            # else:
-            #     data = torch.vstack([original_data, neighbour_data]).to(device)
-            #     label = torch.hstack([original_label, neighbour_label]).to(device)
+            if args.pt_data == 'ori_neigh_train':
+                raise NotImplementedError
+                # data = torch.vstack([original_data, neighbour_data, train_data]).to(device)
+                # label = torch.hstack([original_label, neighbour_label, train_label]).to(device)
+            else:
+                data = torch.vstack([original_data, neighbour_data]).to(device)
+                label = torch.hstack([original_label, neighbour_label]).to(device)
 
 
             if args.mixup:
@@ -182,7 +182,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
                 opt.zero_grad()
 
                 with torch.enable_grad():
-                    loss = nn.CrossEntropyLoss()(model(X_pgd), y)
+                    loss = nn.CrossEntropyLoss()(fix_model(X_pgd), y)
                 loss.backward()
                 eta = 0.003 * X_pgd.grad.data.sign()
                 X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
