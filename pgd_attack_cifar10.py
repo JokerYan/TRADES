@@ -61,8 +61,8 @@ transform_train = transforms.Compose([
 transform_test = transforms.Compose([
     transforms.ToTensor(),
 ])
-trainset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform_train)
-train_loader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, **kwargs)
+# trainset = torchvision.datasets.CIFAR10(root='../data', train=True, download=True, transform=transform_train)
+# train_loader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, **kwargs)
 testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform_test)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
@@ -127,7 +127,7 @@ def _pgd_whitebox_post(model, X, y, train_loaders_by_class,
     # X_pgd = attack_pgd(model, X, y, epsilon, alpha, 50, 10).detach() + X.detach()
     err_pgd = (model(X_pgd).data.max(1)[1] != y.data).float().sum()
 
-    post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X_pgd, train_loader, train_loaders_by_class, args)
+    post_model, original_class, neighbour_class, loss_list, acc_list = post_train(model, X_pgd, None, train_loaders_by_class, args)
     err_pgd_post = (post_model(X_pgd).data.max(1)[1] != y.data).float().sum()
     neighbour_acc = 1 if neighbour_class == y or original_class == y else 0
 
