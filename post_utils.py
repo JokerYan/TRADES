@@ -195,7 +195,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             if target_idx == original_class:
                 continue
             target = torch.ones_like(original_class) * target_idx
-            neighbour_delta_targeted = attack_pgd_targeted(model, images, original_class, target, epsilon, alpha,
+            neighbour_delta_targeted = attack_pgd_targeted(model, images, original_class, target, epsilon / std, alpha,
                                                            attack_iters=20, restarts=1, random_start=args.rs_neigh).detach()
             target_output = fix_model(images + neighbour_delta_targeted)
             target_loss = loss_func(target_output, target)
