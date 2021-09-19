@@ -228,8 +228,8 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # delta.clamp_(-epsilon, epsilon)
             # adv_input = data + delta
             # adv_input = data + (torch.randint(0, 2, size=()) - 0.5).to(device) * 2 * neighbour_delta
-            adv_input = data + -1 * torch.rand_like(data).to(device) * neighbour_delta
-            # adv_input = data + -1 * neighbour_delta
+            # adv_input = data + -1 * torch.rand_like(data).to(device) * neighbour_delta
+            adv_input = data + -1 * neighbour_delta
             # directed_delta = torch.vstack([torch.ones_like(original_data).to(device) * neighbour_delta,
             #                                 torch.ones_like(neighbour_data).to(device) * -1 * neighbour_delta])
             # adv_input = data + directed_delta
@@ -247,15 +247,15 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
                 raise NotImplementedError
             # adv_class = torch.argmax(adv_output)
             # loss_pos = loss_func(adv_output, label)
-            # loss_ori = loss_func(original_output, label)
-            # loss_kl = kl_loss(F.log_softmax(adv_output), F.softmax(original_output))
-            loss_trades = trades_loss(model, data, label, optimizer)
+            loss_ori = loss_func(original_output, label)
+            loss_kl = kl_loss(F.log_softmax(adv_output), F.softmax(original_output))
+            # loss_trades = trades_loss(model, data, label, optimizer)
             # loss_neg = loss_func(adv_output, target)
             # bce_loss = target_bce_loss_func(adv_output, label, original_class, neighbour_class)
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 
             # loss = torch.mean(loss_list)
-            loss = loss_trades
+            loss = loss_ori + 6 * loss_kl
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
