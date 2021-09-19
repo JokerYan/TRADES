@@ -192,8 +192,8 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
                 label = torch.hstack([original_label, neighbour_label]).to(device)
 
 
-            # if args.mixup:
-            #     data = merge_images(data, images, 0.7, device)
+            if args.mixup:
+                data = merge_images(data, images, 0.7, device)
             # target = torch.hstack([neighbour_label, original_label]).to(device)
 
             # # generate pgd adv examples
@@ -264,8 +264,8 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 
             # loss = torch.mean(loss_list)
-            # loss = loss_norm + 6 * loss_kl
-            loss = loss_norm
+            loss = loss_norm + 6 * loss_kl
+            # loss = loss_norm
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
