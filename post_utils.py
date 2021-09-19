@@ -267,7 +267,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
 
             # loss = torch.mean(loss_list)
             print("{:.4f} {:.4f}".format(float(loss_norm), float(loss_kl)))
-            loss = loss_norm + 12 * loss_kl
+            loss = loss_norm + 3 * loss_kl
             # loss = loss_trades
             optimizer.zero_grad()
             loss.backward()
