@@ -45,6 +45,8 @@ parser.add_argument('--pt-data', default='ori_neigh', choices=['ori_rand', 'rand
 parser.add_argument('--pt-method', default='adv', choices=['adv', 'normal'], type=str)
 parser.add_argument('--pt-iter', default=5, type=int)
 parser.add_argument('--pt-lr', default=0.01, type=float)
+parser.set_defaults(rs_neigh=True, type=bool)
+parser.add_argument('--no-rs-neigh', dest='rs_neigh', action='store_false')
 
 args = parser.parse_args()
 
