@@ -247,8 +247,11 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
                 raise NotImplementedError
 
             _, adv_output_class = torch.max(adv_output, 1)
-            adv_output = torch.where(torch.logical_or(torch.eq(adv_output_class, original_class),
-                                                      torch.eq(adv_output_class, neighbour_class))
+            # print(adv_output.shape, normal_output.shape, adv_output_class.shape, original_class.shape)
+            original_class_expanded = torch.ones_like(adv_output_class) * int(original_class)
+            neighbour_class_expanded = torch.ones_like(adv_output_class) * int(neighbour_class)
+            adv_output = torch.where(torch.logical_or(torch.eq(adv_output_class, original_class_expanded),
+                                                      torch.eq(adv_output_class, neighbour_class_expanded))
                                      , adv_output, normal_output)
 
             # adv_class = torch.argmax(adv_output)
