@@ -222,7 +222,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             target = torch.ones_like(original_class) * target_idx
             # neighbour_delta_targeted = attack_pgd_targeted(model, images, original_class, target, epsilon, alpha,
             #                                                attack_iters=20, restarts=1, random_start=args.rs_neigh).detach()
-            neighbour_images_targeted = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, 20, False, device)
+            neighbour_images_targeted = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, 20, args.rs_neigh, device)
             neighbour_delta_targeted = neighbour_images_targeted - images
             target_output = fix_model(images + neighbour_delta_targeted)
             target_loss = loss_func(target_output, target)
@@ -237,7 +237,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # print(int(target), float(target_loss))
         neighbour_images = images + neighbour_delta
 
-        # neighbour_images = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, 20, False, device)
+        # neighbour_images = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, 20, args.rs_neigh, device)
         # neighbour_delta = (neighbour_images - images).detach()
         neighbour_output = fix_model(neighbour_images)
         neighbour_class = torch.argmax(neighbour_output).reshape(1)
