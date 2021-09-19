@@ -192,6 +192,9 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
         #                              attack_iters=20, restarts=1, random_start=args.rs_neigh)
         # neighbour_images = neighbour_delta + images
 
+        min_target_loss = float('inf')
+        max_target_loss = float('-inf')
+        neighbour_delta = None
         for target_idx in range(10):
             if target_idx == original_class:
                 continue
