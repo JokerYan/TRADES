@@ -113,6 +113,7 @@ def attack_pgd(model, X, y, epsilon, alpha, attack_iters, restarts, opt=None, ra
 def attack_pgd_targeted(model, X, y, target, epsilon, alpha, attack_iters, restarts, opt=None, random_start=True):
     max_loss = torch.zeros(y.shape[0]).cuda()
     max_delta = torch.zeros_like(X).cuda()
+    epsilon = torch.ones([3, 1, 1]).cuda() * epsilon
     for zz in range(restarts):
         delta = torch.zeros_like(X).cuda()
         if random_start:
@@ -195,7 +196,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             if target_idx == original_class:
                 continue
             target = torch.ones_like(original_class) * target_idx
-            neighbour_delta_targeted = attack_pgd_targeted(model, images, original_class, target, epsilon / std, alpha,
+            neighbour_delta_targeted = attack_pgd_targeted(model, images, original_class, target, epsilon, alpha,
                                                            attack_iters=20, restarts=1, random_start=args.rs_neigh).detach()
             target_output = fix_model(images + neighbour_delta_targeted)
             target_loss = loss_func(target_output, target)
