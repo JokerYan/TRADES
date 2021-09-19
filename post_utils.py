@@ -252,7 +252,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             filter_condition = torch.logical_or(torch.eq(adv_output_class, original_class_expanded),
                                                 torch.eq(adv_output_class, neighbour_class_expanded))
             filter_condition = filter_condition.unsqueeze(1).expand([len(filter_condition), 10])
-            print(torch.mean(filter_condition))
+            print(torch.mean(filter_condition.float()))
             adv_output = torch.where(filter_condition, adv_output, normal_output)
 
             # adv_class = torch.argmax(adv_output)
