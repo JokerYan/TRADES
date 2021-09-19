@@ -238,7 +238,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # attack_model.set_mode_targeted_by_function(lambda im, la: target)
             # adv_input = attack_model(data, label)
 
-            original_output = model(data.detach())
+            normal_output = model(data.detach())
             if args.pt_method == 'adv':
                 adv_output = model(adv_input.detach())
             elif args.pt_method == 'normal':
@@ -247,15 +247,15 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
                 raise NotImplementedError
             # adv_class = torch.argmax(adv_output)
             # loss_pos = loss_func(adv_output, label)
-            loss_ori = loss_func(original_output, label)
-            loss_kl = kl_loss(F.log_softmax(adv_output), F.softmax(original_output))
+            loss_norm = loss_func(normal_output, label)
+            loss_kl = kl_loss(F.log_softmax(adv_output), F.softmax(normal_output))
             # loss_trades = trades_loss(model, data, label, optimizer)
             # loss_neg = loss_func(adv_output, target)
             # bce_loss = target_bce_loss_func(adv_output, label, original_class, neighbour_class)
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 
             # loss = torch.mean(loss_list)
-            loss = loss_ori + 6 * loss_kl
+            loss = loss_norm + 6 * loss_kl
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
