@@ -245,6 +245,12 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
                 adv_output = model(data.detach())  # non adv training
             else:
                 raise NotImplementedError
+
+            _, adv_output_class = torch.max(adv_output, 1)
+            adv_output = torch.where(torch.logical_or(torch.eq(adv_output_class, original_class),
+                                                      torch.eq(adv_output_class, neighbour_class))
+                                     , adv_output, normal_output)
+
             # adv_class = torch.argmax(adv_output)
             # loss_pos = loss_func(adv_output, label)
             loss_norm = loss_func(normal_output, label)
