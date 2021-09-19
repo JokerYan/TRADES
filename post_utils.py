@@ -238,7 +238,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # attack_model.set_mode_targeted_by_function(lambda im, la: target)
             # adv_input = attack_model(data, label)
 
-            # original_output = model(data.detach())
+            original_output = model(data.detach())
             if args.pt_method == 'adv':
                 adv_output = model(adv_input.detach())
             elif args.pt_method == 'normal':
