@@ -166,6 +166,27 @@ def attack_pgd_trades(model, data, label, epsilon, alpha, step_count, random_sta
     return X_pgd
 
 
+def attack_pgd_trades_targeted(model, data, target, epsilon, alpha, step_count, random_start, device):
+    X, y = Variable(data, requires_grad=True), Variable(target)
+    X_pgd = Variable(X.data, requires_grad=True)
+    if random_start:
+        random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
+        X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
+    for _ in range(step_count):
+        opt = torch.optim.SGD([X_pgd], lr=1e-3)
+        opt.zero_grad()
+
+        with torch.enable_grad():
+            loss = nn.CrossEntropyLoss()(model(X_pgd), y)
+        loss.backward()
+        eta = -1 * alpha * X_pgd.grad.data.sign()
+        X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
+        eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
+        X_pgd = Variable(X.data + eta, requires_grad=True)
+        X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+    return X_pgd
+
+
 def post_train(model, images, train_loader, train_loaders_by_class, args):
     alpha = (10 / 255)
     epsilon = (8 / 255)
@@ -199,8 +220,10 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             if target_idx == original_class:
                 continue
             target = torch.ones_like(original_class) * target_idx
-            neighbour_delta_targeted = attack_pgd_targeted(model, images, original_class, target, epsilon, alpha,
-                                                           attack_iters=20, restarts=1, random_start=args.rs_neigh).detach()
+            # neighbour_delta_targeted = attack_pgd_targeted(model, images, original_class, target, epsilon, alpha,
+            #                                                attack_iters=20, restarts=1, random_start=args.rs_neigh).detach()
+            neighbour_images_targeted = attack_pgd_trades(fix_model, images, original_class, epsilon, alpha, 20, False, device)
+            neighbour_delta_targeted = neighbour_images_targeted - images
             target_output = fix_model(images + neighbour_delta_targeted)
             target_loss = loss_func(target_output, target)
             if target_loss < min_target_loss:
