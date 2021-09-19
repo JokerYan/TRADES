@@ -264,6 +264,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 
             # loss = torch.mean(loss_list)
+            print(loss_norm, loss_kl)
             loss = loss_norm + 6 * loss_kl
             # loss = loss_norm
             optimizer.zero_grad()
