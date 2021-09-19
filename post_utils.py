@@ -267,7 +267,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
 
             # loss = torch.mean(loss_list)
             print("{:.4f} {:.4f}".format(float(loss_norm), float(loss_kl)))
-            loss = loss_norm + 6 * loss_kl
+            loss = loss_norm + 12 * loss_kl
             # loss = loss_trades
             optimizer.zero_grad()
             loss.backward()
@@ -276,6 +276,4 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             loss_list.append(loss)
             acc_list.append(defense_acc)
             print('loss: {:.4f}  acc: {:.4f}'.format(loss, defense_acc))
-            if i == 0 and defense_acc > 0.9:
-                break
     return model, original_class, neighbour_class, loss_list, acc_list
