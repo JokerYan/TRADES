@@ -44,6 +44,7 @@ parser.add_argument('--no-mixup', dest='mixup', action='store_false')
 parser.add_argument('--pt-data', default='ori_neigh', choices=['ori_rand', 'rand', 'ori_neigh_train'], type=str)
 parser.add_argument('--pt-method', default='adv', choices=['adv', 'normal'], type=str)
 parser.add_argument('--pt-iter', default=5, type=int)
+parser.add_argument('--pt-lr', default=0.01, type=float)
 
 args = parser.parse_args()
 
