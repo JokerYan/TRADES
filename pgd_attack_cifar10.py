@@ -226,7 +226,7 @@ def eval_adv_test_whitebox_post(model, device):
 
     # create separate train and test loaders
     test_loader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=False, **kwargs)
-    train_loaders_by_class = get_train_loaders_by_class('../data', batch_size=128)
+    train_loaders_by_class = get_train_loaders_by_class('../data', batch_size=64)
 
     model.eval()
     natural_err_total = 0
