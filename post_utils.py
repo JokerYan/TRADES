@@ -215,20 +215,22 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             #     X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
             # adv_input = X_pgd
 
-            # # generate fgsm adv examples
-            # delta = (torch.rand_like(data) * 2 - 1) * epsilon  # uniform rand from [-eps, eps]
-            # noise_input = data + delta
-            # noise_input.requires_grad = True
-            # noise_output = model(noise_input)
-            # loss = loss_func(noise_output, label)  # loss to be maximized
-            # # loss = target_bce_loss_func(noise_output, label, original_class, neighbour_class)  # bce loss to be maximized
-            # input_grad = torch.autograd.grad(loss, noise_input)[0]
-            # delta = delta + alpha * torch.sign(input_grad)
-            # delta.clamp_(-epsilon, epsilon)
-            # adv_input = data + delta
+            # generate fgsm adv examples
+            delta = (torch.rand_like(data) * 2 - 1) * epsilon  # uniform rand from [-eps, eps]
+            noise_input = data + delta
+            noise_input.requires_grad = True
+            noise_output = model(noise_input)
+            loss = loss_func(noise_output, label)  # loss to be maximized
+            # loss = target_bce_loss_func(noise_output, label, original_class, neighbour_class)  # bce loss to be maximized
+            input_grad = torch.autograd.grad(loss, noise_input)[0]
+            delta = delta + alpha * torch.sign(input_grad)
+            delta.clamp_(-epsilon, epsilon)
+            adv_input = data + delta
+
+            # # directed adv
             # adv_input = data + (torch.randint(0, 2, size=()) - 0.5).to(device) * 2 * neighbour_delta
             # adv_input = data + -1 * torch.rand_like(data).to(device) * neighbour_delta
-            adv_input = data + -1 * neighbour_delta
+            # adv_input = data + -1 * neighbour_delta
             # directed_delta = torch.vstack([torch.ones_like(original_data).to(device) * neighbour_delta,
             #                                 torch.ones_like(neighbour_data).to(device) * -1 * neighbour_delta])
             # adv_input = data + directed_delta
@@ -258,13 +260,13 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             # loss_pos = loss_func(adv_output, label)
             loss_norm = loss_func(normal_output, label)
             loss_kl = kl_loss(F.log_softmax(adv_output, dim=1), F.softmax(normal_output, dim=1))
-            loss_trades = trades_loss(model, data, label, optimizer)
+            # loss_trades = trades_loss(model, data, label, optimizer)
             # loss_neg = loss_func(adv_output, target)
             # bce_loss = target_bce_loss_func(adv_output, label, original_class, neighbour_class)
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 
             # loss = torch.mean(loss_list)
-            # print(float(loss_norm), float(loss_kl), float(loss_trades))
+            print(float(loss_norm), float(loss_kl))
             loss = loss_norm + 6 * loss_kl
             # loss = loss_trades
             optimizer.zero_grad()
