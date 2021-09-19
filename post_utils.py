@@ -256,17 +256,17 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
 
             # adv_class = torch.argmax(adv_output)
             # loss_pos = loss_func(adv_output, label)
-            loss_norm = loss_func(normal_output, label)
-            loss_kl = kl_loss(F.log_softmax(adv_output, dim=1), F.softmax(normal_output, dim=1))
+            # loss_norm = loss_func(normal_output, label)
+            # loss_kl = kl_loss(F.log_softmax(adv_output, dim=1), F.softmax(normal_output, dim=1))
             loss_trades = trades_loss(model, data, label, optimizer)
             # loss_neg = loss_func(adv_output, target)
             # bce_loss = target_bce_loss_func(adv_output, label, original_class, neighbour_class)
             # bl_loss = target_bl_loss_func(adv_output, label, original_class, neighbour_class)
 
             # loss = torch.mean(loss_list)
-            print(float(loss_norm), float(loss_kl), float(loss_trades))
-            loss = loss_norm + 6 * loss_kl
-            # loss = loss_norm
+            print(float(loss_trades))
+            # loss = loss_norm + 6 * loss_kl
+            loss = loss_trades
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
