@@ -166,7 +166,7 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
 
         loss_list = []
         acc_list = []
-        for _ in range(args.pt_iter):
+        for i in range(args.pt_iter):
             # # randomize neighbour
             # if args.pt_data == 'ori_rand':
             #     neighbour_class = (original_class + random.randint(1, 9)) % 10
@@ -276,4 +276,6 @@ def post_train(model, images, train_loader, train_loaders_by_class, args):
             loss_list.append(loss)
             acc_list.append(defense_acc)
             print('loss: {:.4f}  acc: {:.4f}'.format(loss, defense_acc))
+            if i == 0 and defense_acc > 0.9:
+                break
     return model, original_class, neighbour_class, loss_list, acc_list
